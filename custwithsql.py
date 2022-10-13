@@ -7,17 +7,7 @@ root = Tk()
 root.title("Customer Log")
 
 
-#Create and connect to database 
-conn = sqlite3.connect('custlog.db')
-c = conn.cursor()
-
-
 """         Functions           """
-
-
-# Empty dictionary to store entries
-clients = {}
-
 
 # Gets phone input and turns to string 
 def numberGrab():
@@ -30,40 +20,17 @@ def reasonGrab():
     global currentReason
     currentReason = reasonEntry.get()
     currentReason = str(currentReason)
- 
-# Organizes inputs into dictionary    
-def collectInfo():
-    clients[currentClient] = currentReason
-
-# Inserts entries and displays dictionary in text area. Also clears input boxes
-def insertData():
-    clientDisplay.delete("1.0", "end")
-    for currentClient, currentReason in clients.items():
-        clientDisplay.insert(END, "Client = {}, Reason = {}\n".format(currentClient, currentReason))
-    reasonEntry.delete(0, 'end')
-    phoneEntry.delete(0, 'end')
-
-
-# Runs all functions when Submit button is pressed  
-def runGrabs():
-    numberGrab()
-    reasonGrab()
-    collectInfo()
-    #insertData()
-    connect_sql()
-    query_entries()
-    
 
 # Connect to database 
 def connect_sql():
     
     # Create database or connect to one 
     conn = sqlite3.connect('custlog.db')
-    #Create cursor
+    # Create cursor for database
     c = conn.cursor()
     
     
-    #Create table 
+    # Create table 
     c.execute(""" CREATE TABLE IF NOT EXISTS custlogs (
         phonenumber string,
         reason string
@@ -76,38 +43,65 @@ def connect_sql():
                   'reason': currentReason
               })
     
-    #Commit changes 
+    
+    # Commit changes to database
     conn.commit()
     
-    #Close connection 
+    # Close connection 
     conn.close()
     
-    #Delete entries
+    # Delete entries from 
     phoneEntry.delete(0, END)
     reasonEntry.delete(0, END)
     
 # Create query function 
 def query_entries():
-    # Connect to database 
-    conn = sqlite3.connect('custlog.db')
     
-    #Create cursor 
+    # Database requirements
+    conn = sqlite3.connect('custlog.db')
     c = conn.cursor()
     
     # Query the database
     c.execute(" SELECT * FROM custlogs")
     logs = c.fetchall()
     
+    # Clear the left text before displaying table
     clientDisplay.delete("1.0", "end")
     
+    # Separates entries and converts to strings
     print_log = ''
     for log in logs: 
         print_log += str(log[0]) + " " + str(log[1]) + "\n"
     
+    # Inserts table into display area
     clientDisplay.insert(END, print_log)
 
+    # Database requirements 
     conn.commit()
     conn.close()
+
+
+def deleteAll(): 
+    conn = sqlite3.connect('custlog.db')
+    c = conn.cursor()
+    
+    # Deletes entire table
+    c.execute(""" DROP TABLE custlogs """)
+    
+    clientDisplay.delete('1.0', 'end')
+    
+    conn.commit()
+    conn.close()
+
+
+
+
+# Runs all functions when Submit button is pressed  
+def runGrabs():
+    numberGrab()
+    reasonGrab()
+    connect_sql()
+    query_entries()
 
 
 
@@ -134,6 +128,9 @@ reasonEntry.grid(row = 3, column = 0)
 submitButton = Button(root, text = "Submit", command= runGrabs)
 submitButton.grid(row = 4, column = 0)
 
+deleteButton = Button(root, text = "Delete table", command = deleteAll)
+deleteButton.grid(row = 5, column = 0) 
+
 
 
 """ ----- Middle Gab -----"""
@@ -153,11 +150,6 @@ clientDisplay.grid(row =1, column = 2, rowspan=8, ipady = 50)
 
 
 
-
-
-conn.commit()
-conn.close()
-
-"""      Finish             """
+"""      Finish tkinter   """
 root.mainloop()
 
